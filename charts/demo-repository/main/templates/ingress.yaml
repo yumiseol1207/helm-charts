@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: fordong-domain
+  name: ingress-fordong-domain
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=60
+    # SSL Settings
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: 'arn:aws:acm:ap-northeast-2:122518608090:certificate/3b55ca04-01d6-4985-a1e4-963d9ffff2e3'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: service-fordong-domain
+                port:
+                  number: 80
