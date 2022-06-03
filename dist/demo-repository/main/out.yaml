@@ -1,0 +1,97 @@
+---
+# Source: hello-helm/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: fordong-domain
+  name: service-fordong-domain
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: app-fordong-domain
+---
+# Source: hello-helm/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: fordong-domain
+  name: deployment-fordong-domain
+  annotations:
+    keel.sh/policy: force
+    keel.sh/trigger: poll
+    keel.sh/pollSchedule: "@every 10m"
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: app-fordong-domain
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: app-fordong-domain
+    spec:
+      containers:
+        - image: 122518608090.dkr.ecr.ap-northeast-2.amazonaws.com/demo-repository:$main_f506d4
+          imagePullPolicy: Always
+          name: app-fordong-domain
+          resources:
+            limits:
+              cpu: 1
+              memory: 1024Mi
+            requests:
+              cpu: 1
+              memory: 1024Mi
+          ports:
+            - containerPort: 8080
+---
+# Source: hello-helm/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: fordong-domain
+  name: ingress-fordong-domain
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=60
+    # SSL Settings
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: 'arn:aws:acm:ap-northeast-2:122518608090:certificate/3b55ca04-01d6-4985-a1e4-963d9ffff2e3'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: service-fordong-domain
+                port:
+                  number: 80
+---
+# Source: hello-helm/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "release-name-hello-helm-test-connection"
+  labels:
+    helm.sh/chart: hello-helm-0.1.0
+    app.kubernetes.io/name: hello-helm
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "latest"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['release-name-hello-helm:80']
+  restartPolicy: Never
