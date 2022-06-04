@@ -18,7 +18,7 @@ spec:
         app.kubernetes.io/name: app-fordong-domain
     spec:
       containers:
-        - image: 122518608090.dkr.ecr.ap-northeast-2.amazonaws.com/demo-repository:main_6aca0a
+        - image: 122518608090.dkr.ecr.ap-northeast-2.amazonaws.com/demo-repository:main_ed3562
           imagePullPolicy: Always
           name: app-fordong-domain
           resources:
